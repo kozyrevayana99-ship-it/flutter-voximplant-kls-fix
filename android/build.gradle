@@ -1,0 +1,41 @@
+group 'com.voximplant.flutter_voximplant'
+version '3.18.0'
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.1.0")
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: 'com.android.library'
+
+android {
+    namespace "com.voximplant.flutter_voximplant"
+
+    compileSdk 35
+
+    defaultConfig {
+        minSdk  21
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    dependencies {
+        api 'com.voximplant:voximplant-sdk:2.46.0'
+    }
+}

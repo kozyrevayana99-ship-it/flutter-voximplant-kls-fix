@@ -1,0 +1,21 @@
+#
+# To learn more about a Podspec see http://guides.cocoapods.org/syntax/podspec.html
+#
+Pod::Spec.new do |s|
+  s.name             = 'flutter_voximplant'
+  s.version          = '3.18.0'
+  s.summary          = 'Voximplant Flutter SDK'
+  s.description      = <<-DESC
+Voximplant plugin for embedding voice and video communication into Flutter applications.
+                       DESC
+  s.homepage         = 'https://voximplant.com'
+  s.license          = { :type => 'MIT', :file => '../LICENSE' }
+  s.author           = { 'Zingaya Inc.' => 'mobiledev@zingaya.com'}
+  s.source           = { :http => 'https://github.com/voximplant/flutter_voximplant/' }
+  s.source_files = 'flutter_voximplant/Sources/flutter_voximplant/**/*.{h,m}'
+  s.public_header_files = 'flutter_voximplant/Sources/flutter_voximplant/include/**/*.h'
+  s.dependency 'Flutter'
+  s.dependency 'VoxImplantSDK', '2.60.0'
+  s.ios.deployment_target = '13.0'
+  s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
+end

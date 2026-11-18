@@ -1,0 +1,55 @@
+name: Native bridge build checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-build:
+    env:
+      CI: 'true'
+      FLUTTER_SUPPRESS_ANALYTICS: 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: android
+          - os: macos-15
+            target: ios
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Java for the Android probe
+        if: matrix.target == 'android'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Use the pinned Flutter toolchain
+        shell: bash
+        run: |
+          git clone --depth 1 --branch 3.44.8 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Create a disposable probe app
+        shell: bash
+        run: |
+          flutter --version
+          flutter create --platforms android,ios --project-name voximplant_bridge_probe --org com.example .ci_probe
+          python3 .github/scripts/add_probe_dependency.py
+      - name: Resolve the probe dependencies
+        working-directory: .ci_probe
+        run: flutter pub get
+      - name: Build Android native bridge
+        if: matrix.target == 'android'
+        working-directory: .ci_probe
+        run: flutter build apk --debug
+      - name: Build iOS native bridge
+        if: matrix.target == 'ios'
+        working-directory: .ci_probe
+        run: flutter build ios --simulator --no-codesign

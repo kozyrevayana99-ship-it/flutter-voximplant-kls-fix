@@ -1,0 +1,210 @@
+// Copyright (c) 2011 - 2026, Voximplant, Inc. All rights reserved.
+
+import 'package:audio_call/screens/main_screen.dart';
+import 'package:audio_call/services/auth_service.dart';
+import 'package:audio_call/theme/voximplant_theme.dart';
+import 'package:flutter/foundation.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:flutter_voximplant/flutter_voximplant.dart';
+
+class LoginScreen extends StatefulWidget {
+  static const routeName = '/';
+
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => LoginScreenState();
+}
+
+class LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _loginController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _authService.getUsername().then((value) {
+      if (value != null) {
+        _loginController.text = value;
+      }
+    });
+    _tryLoginWithToken();
+  }
+
+  @override
+  void dispose() {
+    _loginController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _tryLoginWithToken() async {
+    if (!await _authService.hasStoredCredentials()) {
+      return;
+    }
+    await _loginWithToken();
+  }
+
+  Future<void> _loginWithToken() async {
+    if (kDebugMode) {
+      debugPrint('LoginScreen: login with accessToken');
+    }
+    try {
+      String? displayName = await _authService.loginWithAccessToken();
+      if (kDebugMode) {
+        debugPrint(
+          'LoginScreen: login with accessToken: displayName: $displayName',
+        );
+      }
+      if (!mounted) {
+        return;
+      }
+      Navigator.pushReplacementNamed(context, MainScreen.routeName);
+    } on VIException catch (e) {
+      _showAlertDialog(e.message);
+    } on Exception catch (e) {
+      _showAlertDialog(e.toString());
+    }
+  }
+
+  Future<void> _loginWithPassword(String user, String password) async {
+    if (kDebugMode) {
+      debugPrint('LoginScreen: login with password: username: $user');
+    }
+    try {
+      String? displayName = await _authService.loginWithPassword(
+        '$user.voximplant.com',
+        password,
+      );
+      if (kDebugMode) {
+        debugPrint(
+          'LoginScreen: login with password: displayName: $displayName',
+        );
+      }
+      if (!mounted) {
+        return;
+      }
+      Navigator.pushReplacementNamed(context, MainScreen.routeName);
+    } on VIException catch (e) {
+      _showAlertDialog(e.message);
+    }
+  }
+
+  void _showAlertDialog(String? reason) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Login error'),
+          content: Text(reason ?? 'Internal error'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Voximplant')),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.only(top: 30),
+              child: Text('Audio call demo', style: TextStyle(fontSize: 30)),
+            ),
+            Form(
+              key: _formKey,
+              child: Column(
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 20,
+                    ),
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                        suffixText: '.voximplant.com',
+                        labelText: 'USER LOGIN',
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      autocorrect: false,
+                      controller: _loginController,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 20,
+                    ),
+                    child: TextFormField(
+                      obscureText: true,
+                      decoration: InputDecoration(labelText: 'PASSWORD'),
+                      autocorrect: false,
+                      controller: _passwordController,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 20,
+                    ),
+                    child: DropdownButtonFormField<VINode>(
+                      decoration: InputDecoration(labelText: 'NODE'),
+                      initialValue: _authService.node,
+                      items: VINode.values
+                          .map(
+                            (node) => DropdownMenuItem(
+                              value: node,
+                              child: Text(node.name),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (node) {
+                        if (node != null) {
+                          setState(() {
+                            _authService.node = node;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20),
+                    child: TextButton(
+                      onPressed: () {
+                        _loginWithPassword(
+                          _loginController.text,
+                          _passwordController.text,
+                        );
+                      },
+                      child: Text(
+                        'LOG IN',
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: VoximplantColors.button,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

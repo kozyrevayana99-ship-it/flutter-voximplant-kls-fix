@@ -1,0 +1,71 @@
+// Copyright (c) 2011-2020, Zingaya, Inc. All rights reserved.
+
+import 'package:audio_call/screens/call_screen.dart';
+import 'package:audio_call/screens/incoming_call_screen.dart';
+import 'package:audio_call/screens/login_screen.dart';
+import 'package:audio_call/screens/main_screen.dart';
+import 'package:audio_call/theme/voximplant_theme.dart';
+import 'package:audio_call/utils/screen_arguments.dart';
+import 'package:audio_call/services/navigation_service.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart';
+import 'package:get_it/get_it.dart';
+
+GetIt getIt = GetIt.instance;
+
+void main() {
+  setupLocator();
+  runApp(const MyApp());
+}
+
+void setupLocator() {
+  getIt.registerLazySingleton(() => NavigationService());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    return MaterialApp(
+      title: 'Audio call',
+      theme: ThemeData(
+        primaryColor: VoximplantColors.primary,
+        primaryColorDark: VoximplantColors.primaryDark,
+        // accentColor: VoximplantColors.accent,
+      ),
+      navigatorKey: getIt<NavigationService>().navigatorKey,
+      onGenerateRoute: (settings) {
+        if (settings.name == CallScreen.routeName) {
+          final args = settings.arguments as CallArguments;
+          return MaterialPageRoute(
+            builder: (context) {
+              return CallScreen(call: args.call);
+            },
+          );
+        } else if (settings.name == IncomingCallScreen.routeName) {
+          final args = settings.arguments as CallArguments;
+          return MaterialPageRoute(
+            builder: (context) {
+              return IncomingCallScreen(call: args.call);
+            },
+          );
+        } else if (settings.name == MainScreen.routeName) {
+          return MaterialPageRoute(
+            builder: (context) {
+              return MainScreen();
+            },
+          );
+        } else {
+          return MaterialPageRoute(
+            builder: (context) {
+              return const LoginScreen();
+            },
+          );
+        }
+      },
+      initialRoute: LoginScreen.routeName,
+    );
+  }
+}

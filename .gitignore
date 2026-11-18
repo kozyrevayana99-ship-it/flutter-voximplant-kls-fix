@@ -1,0 +1,13 @@
+.DS_Store
+__MACOSX/
+.dart_tool/
+.ci_probe/
+.packages
+build/
+*.iml
+android/.gradle/
+example/.dart_tool/
+example/build/
+example/android/.gradle/
+example/ios/Pods/
+example/ios/.symlinks/
