@@ -35,10 +35,32 @@ class _VIVideoViewState extends State<VIVideoView> {
   @override
   void initState() {
     super.initState();
+    _textureId = widget.controller._textureId;
     widget.controller._textureChanged = _textureChanged;
   }
 
+  @override
+  void didUpdateWidget(covariant VIVideoView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.controller, widget.controller)) {
+      if (oldWidget.controller._textureChanged == _textureChanged) {
+        oldWidget.controller._textureChanged = null;
+      }
+      _textureId = widget.controller._textureId;
+      widget.controller._textureChanged = _textureChanged;
+    }
+  }
+
+  @override
+  void dispose() {
+    if (widget.controller._textureChanged == _textureChanged) {
+      widget.controller._textureChanged = null;
+    }
+    super.dispose();
+  }
+
   void _textureChanged(int? textureId) {
+    if (!mounted) return;
     setState(() {
       _VILog._i('textureChanged: $textureId');
       _textureId = textureId;
@@ -57,6 +79,9 @@ typedef _TextureChanged = void Function(int? textureId);
 /// A controller for a video view.
 class VIVideoViewController extends ValueNotifier<_VIVideoViewValue> {
   String? _streamId;
+  // Binding can finish before a Flutter view mounts, or while it is absent.
+  // Keep the texture so the next view can render without restarting capture.
+  int? _textureId;
   StreamSubscription<dynamic>? _rendererSubscription;
   final MethodChannel _channel = Voximplant._channel;
 
@@ -115,7 +140,8 @@ class VIVideoViewController extends ValueNotifier<_VIVideoViewValue> {
           .receiveBroadcastStream(
               'plugins.voximplant.com/renderer_${data['textureId']}')
           .listen(_onRendererEvent);
-      _textureChanged?.call(data['textureId']);
+      _textureId = data['textureId'];
+      _textureChanged?.call(_textureId);
       _streamId = streamId;
     } else {
       if (_streamId == null) {
@@ -127,6 +153,7 @@ class VIVideoViewController extends ValueNotifier<_VIVideoViewValue> {
       });
       _rendererSubscription?.cancel();
       _rendererSubscription = null;
+      _textureId = null;
       _textureChanged?.call(null);
       _streamId = null;
     }
@@ -151,6 +178,8 @@ class VIVideoViewController extends ValueNotifier<_VIVideoViewValue> {
 
   @override
   void dispose() {
+    _textureChanged = null;
+    _textureId = null;
     super.dispose();
     _rendererSubscription?.cancel();
     _rendererSubscription = null;

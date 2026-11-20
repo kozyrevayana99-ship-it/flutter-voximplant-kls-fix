@@ -36,6 +36,10 @@ jobs:
         run: |
           git clone --depth 1 --branch 3.44.8 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
           echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Test renderer lifecycle
+        run: |
+          flutter pub get --no-example
+          flutter test --no-pub test/video_view_lifecycle_test.dart
       - name: Create a disposable probe app
         shell: bash
         run: |

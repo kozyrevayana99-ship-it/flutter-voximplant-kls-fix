@@ -1,3 +1,10 @@
+## 3.18.0+kls.2
+
+* Cache renderer textures allocated before the Flutter view is mounted.
+* Restore the texture on view remount and controller replacement.
+* Detach view callbacks on disposal so a late texture allocation cannot update a disposed State.
+* Add lifecycle regression tests. Native SDK versions and forwarding of the caller's simulcast flag remain unchanged.
+
 # Changelog
 
 ## 3.18.0
